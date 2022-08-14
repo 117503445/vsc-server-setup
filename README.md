@@ -45,7 +45,7 @@ The following is an example of the official source
 
 ### Regular updates
 
-`EDITOR=vim crontab -e`
+`EDITOR=nano crontab -e`
 
 type `0 * * * * curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/cn/install-lastest-vsc.sh | bash`
 

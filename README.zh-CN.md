@@ -44,7 +44,7 @@ curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/s
 
 ### 定时检查更新
 
-`EDITOR=vim crontab -e`
+`EDITOR=nano crontab -e`
 
 输入 `0 * * * * curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/cn/install-lastest-vsc.sh | bash`
 

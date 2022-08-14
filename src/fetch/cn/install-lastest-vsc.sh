@@ -1,6 +1,6 @@
 set -e
 
-commit_sha=$(curl --silent https://vsc-server-setup.oss-cn-hangzhou.aliyuncs.com/sha.txt)
+commit_sha=$(curl --silent https://vsc-server-setup.oss-cn-hangzhou.aliyuncs.com/latest-sha.txt)
 bin_dir="$HOME/.vscode-server/bin/${commit_sha}"
 
 # dir already exists, exit.
