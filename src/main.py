@@ -3,6 +3,7 @@ from pathlib import Path
 import logging
 import requests
 import paramiko
+import paramiko.client
 
 logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                     datefmt='%Y-%m-%d:%H:%M:%S',
@@ -42,10 +43,17 @@ if not file_dest.exists():
 
 for target in cfg['targets']:
     logging.debug(f'target = {target}')
-    client = paramiko.client.SSHClient()
+    client: paramiko.client.SSHClient = paramiko.client.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(target['host'], username=target['user'])
 
-    _, _stdout, _ = client.exec_command(f"[-d ~/.vscode-server/bin/{sha}]")
-    print(_stdout.read().decode())
+    ftp_client = client.open_sftp()
+    ftp_client.put(file_dest, '/tmp/vscode-server-linux-x64.tar.gz')
+    ftp_client.close()
+
+    command = f'mkdir -p ~/.vscode-server/bin/{sha} && tar --no-same-owner -xzv --strip-components=1 -C ~/.vscode-server/bin/{sha} -f "/tmp/vscode-server-linux-x64.tar.gz"'
+    logging.info(f'exec command: {command}')
+    client.exec_command(command)
+    # _, _stdout, _ = client.exec_command(command)
+    # print(_stdout.read().decode())
     client.close()
