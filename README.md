@@ -27,40 +27,65 @@ VSCode Remote allows users to develop in remote servers and containers with the 
 
 ![architecture](https://code.visualstudio.com/assets/docs/remote/remote-overview/architecture.png)
 
-Although VS Code can automate this process, this project provides a script for manually installing VS Code Server when creating Docker images for development environments. In addition, the poor network environment in China often makes downloading VS Code Server unsuccessful, so this project provides an image of the VS Code Server binary package based on AliCloud OSS to speed up the download and installation for Chinese users.
-
-## Getting Started
-
-```sh
-# Officially download and install the latest VS Code Server
-curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/install-lastest-vsc.sh | bash
-
-# China Source Download and install the latest VS Code Server
-curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/cn/install-lastest-vsc.sh | bash
-```
-
+You need to install the latest version of VS Code Server on a remote system, and although VS Code can do this automatically, poor network conditions in China often make downloading VS Code Server fail. This project allows you to keep the server's VS Code Server up to date.
 ## Usage
 
-The following is an example of the official source
+Download docker-compose.yml
 
-### Regular updates
+```yaml
+version: "3.9"
 
-`EDITOR=nano crontab -e`
+services:
+  vsc-server-setup:
+    image: 117503445/vsc-server-setup
+    container_name: vsc-server-setup
+    volumes:
+      - ./config/config.json:/root/config.json:ro
+      - ./data:/root/data
 
-type `0 * * * * curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/cn/install-lastest-vsc.sh | bash`
+      - ~/.ssh:/root/.ssh:ro
+      
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+```
 
-The latest VS Code Server can be downloaded and installed automatically (every hour).
+Write `./config/config.json`
+
+```json
+{
+    "logging_level": "INFO",
+    "targets": [
+        {
+            "type": "ssh",
+            "name": "server1",
+
+            "host": "127.0.0.1",
+            "port": 22,
+            "user": "root"
+        },
+        {
+            "type": "ssh",
+            "name": "server2",
+
+            "host": "192.168.1.1",
+            "port": 22,
+            "user": "root"
+        }
+    ]
+}
+```
+
+Currently, only SSH method is supported
+
+Execute `docker compose up` to update VSC Server
+
+You can also run this command periodically via crontab
+
+`0 * * * * * cd ~/.docker/vsc-server-setup && docker compose up`
 
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-## Acknowledgments
-
-- [b01](https://gist.github.com/b01/0a16b6645ab7921b0910603dfb85e4fb) provides the original download script
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
 [contributors-shield]: https://img.shields.io/github/contributors/117503445/vsc-server-setup.svg?style=for-the-badge
 [contributors-url]: https://github.com/117503445/vsc-server-setup/graphs/contributors

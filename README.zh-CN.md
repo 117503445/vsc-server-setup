@@ -26,40 +26,67 @@ VSCode Remote 允许用户在远程服务器和容器中进行开发，其架构
 
 ![architecture](https://code.visualstudio.com/assets/docs/remote/remote-overview/architecture.png)
 
-在远程系统中需要安装最新版本的 VS Code Server。尽管 VS Code 可以自动完成此过程，但是在制作用于开发环境的 Docker 镜像时，还是需要本项目提供的手动安装 VS Code Server 的脚本。此外，中国糟糕的网络环境使下载 VS Code Server 经常失败，本项目基于 阿里云 OSS 提供了 VS Code Server 二进制包的镜像，从而加速中国用户的下载安装。
-
-## 快速开始
-
-```sh
-# 官方下载安装最新的 VS Code Server
-curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/install-lastest-vsc.sh | bash
-
-# 中国源下载安装最新的 VS Code Server
-curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/cn/install-lastest-vsc.sh | bash
-```
+在远程系统中需要安装最新版本的 VS Code Server。尽管 VS Code 可以自动完成此过程，但是中国糟糕的网络环境使下载 VS Code Server 经常失败。通过本项目，可以使服务器的 VS Code Server 始终保持最新的版本。
 
 ## 使用方法
 
-以下以中国源为例
+下载 `docker-compose.yml`
 
-### 定时检查更新
+```yaml
+version: "3.9"
 
-`EDITOR=nano crontab -e`
+services:
+  vsc-server-setup:
+    image: 117503445/vsc-server-setup
+    container_name: vsc-server-setup
+    volumes:
+      - ./config/config.json:/root/config.json:ro
+      - ./data:/root/data
 
-输入 `0 * * * * curl -fsSL https://raw.githubusercontent.com/117503445/vsc-server-setup/master/src/fetch/cn/install-lastest-vsc.sh | bash`
+      - ~/.ssh:/root/.ssh:ro
+      
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+```
 
-即可自动（每小时）下载安装最新的 VS Code Server
+编写 `./config/config.json`
+
+```json
+{
+    "logging_level": "INFO",
+    "targets": [
+        {
+            "type": "ssh",
+            "name": "server1",
+
+            "host": "127.0.0.1",
+            "port": 22,
+            "user": "root"
+        },
+        {
+            "type": "ssh",
+            "name": "server2",
+
+            "host": "192.168.1.1",
+            "port": 22,
+            "user": "root"
+        }
+    ]
+}
+```
+
+目前只支持 SSH 的方式
+
+执行 `docker compose up` 即可进行 VSC Server 的更新
+
+也可以通过 crontab 定期执行此命令
+
+`0 * * * * cd ~/.docker/vsc-server-setup && docker compose up`
 
 <!-- LICENSE -->
 ## License
 
 在 MIT 许可下发布。更多信息见 `LICENSE.txt`。
-
-<!-- ACKNOWLEDGMENTS -->
-## 致谢
-
-- [b01](https://gist.github.com/b01/0a16b6645ab7921b0910603dfb85e4fb) 的原始下载脚本
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->

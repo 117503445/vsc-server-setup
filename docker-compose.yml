@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  vsc-server-setup:
+    image: 117503445/vsc-server-setup
+    container_name: vsc-server-setup
+    volumes:
+      - ./config/config.json:/root/config.json:ro
+      - ./data:/root/data
+
+      - ~/.ssh:/root/.ssh:ro
+      
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
