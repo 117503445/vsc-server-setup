@@ -1,0 +1,13 @@
+{
+    "logging_level": "INFO",
+    "targets": [
+        {
+            "type": "ssh",
+            "name": "zj",
+
+            "host": "127.0.0.1",
+            "port": 22,
+            "user": "root"
+        }
+    ]
+}
