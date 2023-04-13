@@ -10,11 +10,18 @@ if cfg['logging_level']:
 else:
     level = logging.INFO
 
-logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                    datefmt='%Y-%m-%d:%H:%M:%S',
-                    level=level)
+logger = logging.getLogger(__name__)
+logger.setLevel(level)
 
-# logging.info('host %s', cfg[''])
+stream_handler = logging.StreamHandler()
+
+formatter = logging.Formatter(
+    '%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', datefmt='%Y-%m-%d:%H:%M:%S')
+stream_handler.setFormatter(formatter)
+
+logger.addHandler(stream_handler)
+
+# logger.info('host %s', cfg[''])
 
 s = requests.session()
 
@@ -27,11 +34,13 @@ if 'sha' in cfg:
 else:
     tag_name = s.get(
         'https://api.github.com/repos/microsoft/vscode/releases/latest').json()['tag_name']
-    sha = s.get(
-        f'https://api.github.com/repos/microsoft/vscode/git/ref/tags/{tag_name}').json()['object']['sha']
+    logger.info(f'tag_name = {tag_name}')
+    tag_url = s.get(
+        f'https://api.github.com/repos/microsoft/vscode/git/ref/tags/{tag_name}').json()['object']['url']
+    sha = s.get(tag_url).json()['object']['sha']
 
 bin_url = f'https://update.code.visualstudio.com/commit:{sha}/server-linux-x64/stable'
-logging.info(f'bin_url = {bin_url}')
+logger.info(f'bin_url = {bin_url}')
 
 file_dest = dir_data / f'{sha}.tar.gz'
 if not file_dest.exists():
@@ -40,15 +49,18 @@ if not file_dest.exists():
         if f.is_file():
             f.unlink()
 
-    logging.info(f'downloading {bin_url}')
+    logger.info(f'downloading {bin_url}')
     r = s.get(bin_url)
+    if r.status_code != 200:
+        logger.error(f'download failed, status_code = {r.status_code}')
+        exit(1)
     with open(file_dest, 'wb') as f:
         f.write(r.content)
 
-logging.info('processing targets')
+logger.info('processing targets')
 
 for target in cfg['targets']:
-    logging.info(f'target = {target}')
+    logger.info(f'target = {target}')
     client: paramiko.client.SSHClient = paramiko.client.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     username = target['user']
@@ -65,19 +77,18 @@ for target in cfg['targets']:
         ftp_client.stat(f'{home_dir}/.vscode-server/bin/{sha}/node')
         is_exist = True
     except IOError as ex:
-        logging.error(ex)
+        logger.debug(ex)
         pass
 
-    logging.info(f'is_exist = {is_exist}')
+    logger.info(f'is_exist = {is_exist}')
 
     if not is_exist:
         ftp_client.put(file_dest, '/tmp/vscode-server-linux-x64.tar.gz')
-        command = f'mkdir -p ~/.vscode-server/bin/{sha} && echo extra to ~/.vscode-server/bin/{sha} && tar --no-same-owner -zx --strip-components=1 -C ~/.vscode-server/bin/{sha} -f "/tmp/vscode-server-linux-x64.tar.gz"'
-        logging.info(f'exec command: {command}')
+        command = f'rm -rf ~/.vscode-server/bin/{sha} && mkdir -p ~/.vscode-server/bin/{sha} && echo extra to ~/.vscode-server/bin/{sha} && tar --no-same-owner -zx --strip-components=1 -C ~/.vscode-server/bin/{sha} -f "/tmp/vscode-server-linux-x64.tar.gz"'
+        logger.info(f'exec command: {command}')
         _, _stdout, _ = client.exec_command(command)
-        logging.info(f'output: {_stdout.read().decode()}')
-
-
+        logger.info(f'output: {_stdout.read().decode()}')
+        
     ftp_client.close()
     # _, _stdout, _ = client.exec_command(command)
     # print(_stdout.read().decode())
