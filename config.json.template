@@ -1,13 +1,18 @@
 {
-    "logging_level": "INFO",
-    "targets": [
-        {
-            "type": "ssh",
-            "name": "zj",
-
-            "host": "127.0.0.1",
-            "port": 22,
-            "user": "root"
-        }
-    ]
+  "logging_level": "INFO",
+  "targets": [
+    {
+      "type": "ssh",
+      "name": "zj",
+      "host": "127.0.0.1",
+      "port": 22,
+      "user": "root"
+    }
+  ],
+  "alert": {
+    "enabled": true,
+    "host": "https://msgpusher.com",
+    "username": "root",
+    "token": "TOKEN"
+  }
 }

@@ -4,11 +4,14 @@ import logging
 import requests
 import paramiko
 import paramiko.client
+from message_pusher_sdk.message_pusher_sdk import MessagePusherSDK
+
 cfg = file.read_json('config.json')
 if cfg['logging_level']:
     level = logging._nameToLevel[cfg['logging_level']]
 else:
     level = logging.INFO
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level)
@@ -21,7 +24,19 @@ stream_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
 
+alert_enabled = cfg['alert']['enabled']
+
+if alert_enabled:
+    sdk = MessagePusherSDK(cfg['alert']['host'], cfg['alert']['token'])
+
+
+def alert(description: str):
+    if alert_enabled:
+        resp = sdk.push(cfg['alert']['username'], '', description, '')
+        if resp:
+            logger.error(resp)
 # logger.info('host %s', cfg[''])
+
 
 s = requests.session()
 
@@ -53,9 +68,12 @@ if not file_dest.exists():
     r = s.get(bin_url)
     if r.status_code != 200:
         logger.error(f'download failed, status_code = {r.status_code}')
+        alert(
+            f'download tag_name[{tag_name}] failed, sha = {sha}, bin_url = {bin_url}')
         exit(1)
     with open(file_dest, 'wb') as f:
         f.write(r.content)
+    alert(f'download tag_name[{tag_name}] success')
 
 logger.info('processing targets')
 
@@ -70,7 +88,7 @@ for target in cfg['targets']:
         home_dir = '/root'
     else:
         home_dir = f'/home/{username}'
-    
+
     ftp_client = client.open_sftp()
     is_exist = False
     try:
@@ -88,7 +106,7 @@ for target in cfg['targets']:
         logger.info(f'exec command: {command}')
         _, _stdout, _ = client.exec_command(command)
         logger.info(f'output: {_stdout.read().decode()}')
-        
+
     ftp_client.close()
     # _, _stdout, _ = client.exec_command(command)
     # print(_stdout.read().decode())

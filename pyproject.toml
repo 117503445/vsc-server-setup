@@ -12,7 +12,11 @@ python = "^3.10"
 requests = "^2.28.2"
 paramiko = "^3.1.0"
 htutil = "^3.0.0"
+message-pusher-sdk = "^0.1.0"
 
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.0.2"
 
 [build-system]
 requires = ["poetry-core"]
