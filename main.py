@@ -73,7 +73,7 @@ if not file_dest.exists():
         exit(1)
     with open(file_dest, 'wb') as f:
         f.write(r.content)
-    alert(f'download tag_name[{tag_name}] success')
+    alert(f'download vsc server tag_name[{tag_name}] success')
 
 logger.info('processing targets')
 
