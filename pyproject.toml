@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "vsc-server-setup"
+version = "0.1.0"
+description = "setup VSCode server"
+authors = ["117503445 <t117503445@gmail.com>"]
+license = "GNU/GPL V3"
+readme = "README.md"
+packages = [{include = "vsc_server_setup"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.28.2"
+paramiko = "^3.1.0"
+htutil = "^3.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
