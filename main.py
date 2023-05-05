@@ -31,6 +31,7 @@ else:
 
 if cfg.get('logging_level'):
     level = logging._nameToLevel[cfg['logging_level']]
+    logger.setLevel(level)
 
 alert_enabled = cfg.get('alert', {}).get('enabled')
 
@@ -124,7 +125,7 @@ for target in cfg.get('targets', []):
             _, _stdout, _ = client.exec_command(command)
             logger.info(f'output: {_stdout.read().decode()}')
     except Exception as ex:
-        logging.error(f'failed when processing {target}, exception: {ex}')
+        logger.error(f'failed when processing {target}, exception: {ex}')
     finally:
         ftp_client.close()
 
