@@ -1,20 +1,16 @@
-from htutil import file
-from pathlib import Path
 import logging
 import requests
 import paramiko
 import paramiko.client
-from message_pusher_sdk.message_pusher_sdk import MessagePusherSDK
+import json
 
-cfg = file.read_json('config.json')
-if cfg['logging_level']:
-    level = logging._nameToLevel[cfg['logging_level']]
-else:
-    level = logging.INFO
+from htutil import file
+from pathlib import Path
+from message_pusher_sdk.message_pusher_sdk import MessagePusherSDK
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(level)
+logger.setLevel(logging.INFO)
 
 stream_handler = logging.StreamHandler()
 
@@ -24,7 +20,19 @@ stream_handler.setFormatter(formatter)
 
 logger.addHandler(stream_handler)
 
-alert_enabled = cfg['alert']['enabled']
+
+file_cfg = Path('config.json')
+
+if file_cfg.exists():
+    cfg = file.read_json(file_cfg)
+else:
+    logger.warning('config file not found')
+    cfg = {}
+
+if cfg.get('logging_level'):
+    level = logging._nameToLevel[cfg['logging_level']]
+
+alert_enabled = cfg.get('alert', {}).get('enabled')
 
 if alert_enabled:
     sdk = MessagePusherSDK(cfg['alert']['host'], cfg['alert']['token'])
@@ -52,7 +60,15 @@ else:
     logger.info(f'tag_name = {tag_name}')
     tag_url = s.get(
         f'https://api.github.com/repos/microsoft/vscode/git/ref/tags/{tag_name}').json()['object']['url']
-    sha = s.get(tag_url).json()['object']['sha']
+    resp = s.get(tag_url).json()
+    if 'object' in resp:
+        sha = resp['object']['sha']
+    elif 'sha' in resp:
+        sha = resp['sha']
+    else:
+        logger.error('sha not found, resp = %s', json.dumps(resp))
+        exit(1)
+    logger.info(f'sha = {sha}')
 
 bin_url = f'https://update.code.visualstudio.com/commit:{sha}/server-linux-x64/stable'
 logger.info(f'bin_url = {bin_url}')
@@ -77,7 +93,7 @@ if not file_dest.exists():
 
 logger.info('processing targets')
 
-for target in cfg['targets']:
+for target in cfg.get('targets', []):
     logger.info(f'target = {target}')
     client: paramiko.client.SSHClient = paramiko.client.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
