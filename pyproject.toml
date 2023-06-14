@@ -11,8 +11,9 @@ packages = [{include = "vsc_server_setup"}]
 python = "^3.10"
 requests = {extras = ["socks"], version = "^2.30.0"}
 paramiko = "^3.1.0"
-htutil = "^3.0.0"
 message-pusher-sdk = "^0.1.0"
+htutil = "^3.2.0"
+types-paramiko = "^3.2.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

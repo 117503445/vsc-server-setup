@@ -3,6 +3,8 @@ import requests
 import paramiko
 import paramiko.client
 import json
+import tarfile
+import subprocess
 
 from htutil import file
 from pathlib import Path
@@ -50,47 +52,46 @@ def alert(description: str):
 s = requests.session()
 
 dir_data = Path('data')
-if not dir_data.exists():
-    dir_data.mkdir()
+dir_data.mkdir(exist_ok=True)
 
-if 'sha' in cfg:
-    sha = cfg['sha']
-else:
-    tag_name = s.get(
-        'https://api.github.com/repos/microsoft/vscode/releases/latest').json()['tag_name']
-    logger.info(f'tag_name = {tag_name}')
-    tag_url = s.get(
-        f'https://api.github.com/repos/microsoft/vscode/git/ref/tags/{tag_name}').json()['object']['url']
-    resp = s.get(tag_url).json()
-    if 'object' in resp:
-        sha = resp['object']['sha']
-    elif 'sha' in resp:
-        sha = resp['sha']
-    else:
-        logger.error('sha not found, resp = %s', json.dumps(resp))
-        exit(1)
-    logger.info(f'sha = {sha}')
+tag_name = s.get(
+    'https://api.github.com/repos/microsoft/vscode/releases/latest').json()['tag_name']
+logger.info(f'tag_name = {tag_name}')
 
-bin_url = f'https://update.code.visualstudio.com/commit:{sha}/server-linux-x64/stable'
-logger.info(f'bin_url = {bin_url}')
+file_meta = dir_data / 'meta.json'
+if file_meta.exists():
+    meta = file.read_json(file_meta)
+    if meta['tag_name'] == tag_name:
+        logger.info('tag_name not changed, skip')
+        exit(0)
 
-file_dest = dir_data / f'{sha}.tar.gz'
-if not file_dest.exists():
-    # clean old files
-    for f in dir_data.glob('*.tar.gz'):
-        if f.is_file():
-            f.unlink()
+file_dest = dir_data / f'server-linux-x64-stable.tar.gz'
+bin_url = 'https://update.code.visualstudio.com/latest/server-linux-x64/stable'
+logger.info(f'downloading {bin_url}')
+r = s.get(bin_url)
+if r.status_code != 200:
+    logger.error(f'download failed, status_code = {r.status_code}')
+    alert(f'download tag_name[{tag_name}] failed')
+    exit(1)
+with open(file_dest, 'wb') as f:
+    f.write(r.content)
 
-    logger.info(f'downloading {bin_url}')
-    r = s.get(bin_url)
-    if r.status_code != 200:
-        logger.error(f'download failed, status_code = {r.status_code}')
-        alert(
-            f'download vsc server[{tag_name}] failed, sha = {sha}, bin_url = {bin_url}')
-        exit(1)
-    with open(file_dest, 'wb') as f:
-        f.write(r.content)
-    alert(f'download vsc server[{tag_name}] success')
+alert(f'download vsc server tag_name[{tag_name}] success')
+
+dir_dest = dir_data / 'server'
+
+with tarfile.open(file_dest, "r:gz") as tar:
+    tar.extractall(dir_dest)
+
+file_code_server = dir_dest / 'vscode-server-linux-x64' / 'bin' / 'code-server'
+cmd = f'./{file_code_server} --version | head -2 | tail -1'
+result = subprocess.run(cmd, shell=True, check=True,
+                        capture_output=True, text=True)
+sha = result.stdout.rstrip()
+
+logger.info(f'sha = {sha}')
+
+file.write_json(file_meta, {'tag_name': tag_name, 'sha': sha})
 
 logger.info('processing targets')
 
@@ -127,6 +128,7 @@ for target in cfg.get('targets', []):
     except Exception as ex:
         logger.error(f'failed when processing {target}, exception: {ex}')
     finally:
-        ftp_client.close()
-
-        client.close()
+        if 'ftp_client' in locals():
+            ftp_client.close() # type: ignore
+        if 'client' in locals():
+            client.close() # type: ignore
