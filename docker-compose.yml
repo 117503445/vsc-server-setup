@@ -1,13 +1,11 @@
-version: "3.9"
-
 services:
-  vsc-server-setup:
-    image: 117503445/vsc-server-setup
-    container_name: vsc-server-setup
+  vsc-server-setup-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: vsc-server-setup-dev
     volumes:
-      - ./config/config.json:/root/config.json:ro
-      - ./data:/root/data
-
+      - ./:/workspace
       - ~/.ssh:/root/.ssh:ro
       
       - /etc/localtime:/etc/localtime:ro
