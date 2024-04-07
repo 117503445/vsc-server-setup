@@ -70,12 +70,18 @@ services:
             "host": "192.168.1.1",
             "port": 22,
             "user": "root"
+        },
+        {
+            "type": "s3",
+            "endpoint_url": "",
+            "ak": "",
+            "sk": "",
+            "region": "",
+            "bucket": "",
         }
     ]
 }
 ```
-
-目前只支持 SSH 的方式
 
 执行 `docker compose up` 即可进行 VSC Server 的更新
 

@@ -14,6 +14,7 @@ paramiko = "^3.1.0"
 message-pusher-sdk = "^0.1.0"
 htutil = "^3.2.0"
 types-paramiko = "^3.2.0.0"
+boto3 = "^1.34.79"
 
 
 [tool.poetry.group.dev.dependencies]
