@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # $VSC_SERVER_MIRROR provide a mirror for vscode-server
 # GET ${VSC_SERVER_MIRROR}/latest-sha to get latest sha
@@ -16,11 +16,6 @@ if [ -z ${URL} ]; then
     URL=https://vsc-server.unidrop.top/
 fi
 
-# if URL not end with /, add /
-if [[ ! ${URL} =~ /$ ]]; then
-    URL="${URL}/"
-fi
-
 # check curl or wget
 HTTP_TOOL=""
 if command -v curl &>/dev/null; then
@@ -35,7 +30,6 @@ fi
 echo "using ${HTTP_TOOL} as HTTP tool, source: ${URL}"
 
 # get latest sha
-# get https://webdav.gh.117503445.top:20000/vsc-server/latest-sha
 if [ "${HTTP_TOOL}" == "curl" ]; then
     LATEST_SHA=$(curl -s ${URL}latest-sha)
 elif [ "${HTTP_TOOL}" == "wget" ]; then
@@ -86,7 +80,7 @@ if [ ! -z ${VSC_EXTS} ]; then
     IFS=',' read -r -a VSC_EXTS <<<"$VSC_EXTS"
     echo "installing extensions: ${VSC_EXTS[@]}"
     for ext in "${VSC_EXTS[@]}"; do
-        ${HOME_DIR}/.vscode-server/bin/${LATEST_SHA}/bin/code-server --install-extension ${ext}
+        ${HOME_DIR}/.vscode-server/bin/${LATEST_SHA}/bin/code-server --install-extension ${ext} --force
     done
 else
     echo "no extensions to install"
