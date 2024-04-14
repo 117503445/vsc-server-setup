@@ -80,8 +80,9 @@ if [ ! -z ${VSC_EXTS} ]; then
     IFS=',' read -r -a VSC_EXTS <<<"$VSC_EXTS"
     echo "installing extensions: ${VSC_EXTS[@]}"
     for ext in "${VSC_EXTS[@]}"; do
-        ${HOME_DIR}/.vscode-server/bin/${LATEST_SHA}/bin/code-server --install-extension ${ext} --force
+        ${HOME_DIR}/.vscode-server/bin/${LATEST_SHA}/bin/code-server --install-extension ${ext}
     done
+    ${HOME_DIR}/.vscode-server/bin/${LATEST_SHA}/bin/code-server --update-extensions
 else
     echo "no extensions to install"
 fi
