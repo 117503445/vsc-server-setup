@@ -3,12 +3,14 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile.dev
-    container_name: vsc-server-setup-dev
     stdin_open: true
     tty: true
+    init: true
     volumes:
       - ./:/workspace
       - ~/.ssh:/root/.ssh:ro
       
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+
+      - /var/run/docker.sock:/var/run/docker.sock:ro
